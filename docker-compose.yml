@@ -1,0 +1,39 @@
+services:
+
+  experiment-areas3:
+    hostname: exp-areas3
+    image: davidedomini99/experiments-2025-aaai-sparseful:1.0.6
+    volumes:
+      - davide.domini-volume:/experiment/data
+    environment:
+      DATA_OWNER: 1000:1000
+      LEARNING_HYPERPARAMETERS: |
+        all: 
+          areas: [3]
+
+  experiment-areas5:
+    hostname: exp-areas5
+    image: davidedomini99/experiments-2025-aaai-sparseful:1.0.6
+    volumes:
+      - davide.domini-volume:/experiment/data
+    environment:
+      DATA_OWNER: 1000:1000
+      LEARNING_HYPERPARAMETERS: |
+        all: 
+          areas: [5]
+
+  experiment-areas9:
+    hostname: exp-areas9
+    image: davidedomini99/experiments-2025-aaai-sparseful:1.0.6
+    volumes:
+      - davide.domini-volume:/experiment/data
+    environment:
+      DATA_OWNER: 1000:1000
+      LEARNING_HYPERPARAMETERS: |
+        all: 
+          areas: [9]
+        
+
+volumes:
+  davide.domini-volume:
+    external: true
