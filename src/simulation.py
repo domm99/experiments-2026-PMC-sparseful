@@ -1,11 +1,14 @@
 import os
 import sys
 import yaml
+import torch
 import random
+import argparse
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from learning.model import MLP
+from learning import prune_model
 from PSFLClient import psfl_client
 from dummy_client import dummy_client
 from phyelds.simulator import Simulator
@@ -20,17 +23,23 @@ from phyelds.simulator.exporter import csv_exporter, ExporterConfig
 from ProFed.partitioner import Environment, Region, download_dataset, split_train_validation, partition_to_subregions
 
 
-def get_hyperparameters():
-    """
-    Fetches the hyperparameters from the docker compose config file
-    :return: the experiment name and the hyperparameters (as a dictionary name -> values)
-    """
-    hyperparams = os.environ['LEARNING_HYPERPARAMETERS']
-    hyperparams = yaml.safe_load(hyperparams)
-    experiment_name, hyperparams = list(hyperparams.items())[0]
-    return experiment_name.lower(), hyperparams
+def get_current_device():
+    device: str = 'cpu'
+    if torch.accelerator.is_available():
+        current_accelerator = torch.accelerator.current_accelerator()
+        if current_accelerator is not None:
+            device = current_accelerator.type
+    return device
 
-def run_simulation(threshold, sparsity_level, number_subregions, seed):
+
+def run_simulation(threshold,
+                   sparsity_level,
+                   number_subregions,
+                   seed,
+                   pre_pruning = False,
+                   pruning_for_check = False,
+                   dataset='EMNIST',
+                   device = 'cpu'):
 
     simulator = Simulator()
 
@@ -39,6 +48,8 @@ def run_simulation(threshold, sparsity_level, number_subregions, seed):
     deformed_lattice(simulator, 7, 7, 1, 0.01)
 
     initial_model_params = MLP().state_dict()
+    if pre_pruning:
+        initial_model_params = prune_model(initial_model_params, sparsity_level) # Pre pruning
 
     devices = len(simulator.environment.nodes.values())
     mapping_devices_area = distribute_nodes_spatially(devices, number_subregions)
@@ -46,7 +57,7 @@ def run_simulation(threshold, sparsity_level, number_subregions, seed):
     print(f'Number of devices: {devices}')
     print(mapping_devices_area)
 
-    train_data, test_data = download_dataset('EMNIST')
+    train_data, test_data = download_dataset(dataset)
 
     train_data, validation_data = split_train_validation(train_data, 0.8)
     print(f'Number of training samples: {len(train_data)}')
@@ -79,16 +90,9 @@ def run_simulation(threshold, sparsity_level, number_subregions, seed):
             threshold=threshold,
             sparsity_level=sparsity_level,
             regions=number_subregions,
-            seed = seed)
-        # simulator.schedule_event(
-        #         0.0,
-        #         aggregate_program_runner,
-        #         simulator,
-        #         0.1,
-        #         node,
-        #         dummy_client,
-        #         data=mapping[node.id]
-        # )
+            seed = seed,
+            pruning_for_check=pruning_for_check,
+            device = device,)
     # render
     # simulator.schedule_event(0.95, render_sync, simulator, "result")
     config = ExporterConfig('data/', f'federations_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}', [], [], 3)
@@ -98,38 +102,47 @@ def run_simulation(threshold, sparsity_level, number_subregions, seed):
     simulator.add_monitor(TestSetEvalMonitor(simulator))
     simulator.run(80)
 
-# Hyper-parameters configuration
-thresholds = [20.0]
-sparsity_levels = [0.0, 0.3, 0.5, 0.7, 0.9]
-# areas = [3, 5, 9]
-seeds = list(range(10))
+if __name__ == '__main__':
 
-experiment_name, hyperparams = get_hyperparameters()
-areas = hyperparams['areas']
+    # Hyper-parameters from arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--max_seed', default='1')
+    parser.add_argument('--dataset', default='EMNIST')
+    args = parser.parse_args()
 
-experiment_log_dir = 'finished-experiments/'
+    # Hyper-parameters configuration
+    thresholds = [40.0]
+    sparsity_levels = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
+    areas = [3, 5, 9]
+    seeds = list(range(int(args.max_seed)))
+    device = get_current_device()
+    dataset = args.dataset
 
-data_dir = Path(experiment_log_dir)
-data_dir.mkdir(parents=True, exist_ok=True)
+    experiment_log_dir = 'finished-experiments/'
 
-csv_file = f'{experiment_log_dir}experiment_log.csv'
+    data_dir = Path(experiment_log_dir)
+    data_dir.mkdir(parents=True, exist_ok=True)
 
-df = pd.DataFrame(columns=['timestamp', 'experiment'])
+    csv_file = f'{experiment_log_dir}experiment_log.csv'
 
-try:
-    df = pd.read_csv(csv_file)
-except FileNotFoundError:
-    pass
+    df = pd.DataFrame(columns=['timestamp', 'experiment'])
 
-for seed in seeds:
-    random.seed(seed)
-    for a in areas:
-        for threshold in thresholds:
-            for sparsity_level in sparsity_levels:
-                print(f'Starting simulation with seed={seed}, regions={a}, sparsity={sparsity_level}, threshold={threshold}')
-                run_simulation(threshold, sparsity_level, a, seed)
-                experiment_name = f'seed-{seed}_regions-{a}_sparsity-{sparsity_level}_threshold-{threshold}'
-                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                new_line = {'timestamp': timestamp, 'experiment': experiment_name}
-                df = pd.concat([df, pd.DataFrame([new_line])], ignore_index=True)
-                df.to_csv(csv_file, index=False)
+    try:
+        df = pd.read_csv(csv_file)
+    except FileNotFoundError:
+        pass
+
+    print(f'-------------------- USING {device} --------------------')
+
+    for seed in seeds:
+        random.seed(seed)
+        for a in areas:
+            for threshold in thresholds:
+                for sparsity_level in sparsity_levels:
+                    print(f'Starting simulation with seed={seed}, regions={a}, sparsity={sparsity_level}, threshold={threshold}')
+                    run_simulation(threshold, sparsity_level, a, seed, pre_pruning = True, pruning_for_check = False, dataset=dataset, device=device)
+                    experiment_name = f'seed-{seed}_regions-{a}_sparsity-{sparsity_level}_threshold-{threshold}'
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    new_line = {'timestamp': timestamp, 'experiment': experiment_name}
+                    df = pd.concat([df, pd.DataFrame([new_line])], ignore_index=True)
+                    df.to_csv(csv_file, index=False)

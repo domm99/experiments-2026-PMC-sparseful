@@ -5,10 +5,11 @@ from learning.model import MLP
 import torch.nn.utils.prune as tprune
 from torch.utils.data import DataLoader
 
-
-def local_training(model, epochs, data, batch_size):
+# TODO use device
+def local_training(model, epochs, data, batch_size, device):
     # torch.manual_seed(seed)
     criterion = nn.NLLLoss()
+    model.to(device)
     model.train()
     epoch_loss = []
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
@@ -16,6 +17,7 @@ def local_training(model, epochs, data, batch_size):
     for _ in range(epochs):
         batch_loss = []
         for batch_index, (images, labels) in enumerate(data_loader):
+            images, labels = images.to(device), labels.to(device)
             model.zero_grad()
             log_probs = model(images)
             loss = criterion(log_probs, labels)
@@ -24,17 +26,19 @@ def local_training(model, epochs, data, batch_size):
             batch_loss.append(loss.item())
         mean_epoch_loss = sum(batch_loss) / len(batch_loss)
         epoch_loss.append(mean_epoch_loss)
-    return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
+    return model.cpu().state_dict(), sum(epoch_loss) / len(epoch_loss)
 
 
-def model_evaluation(model_params, data, batch_size):
+def model_evaluation(model_params, data, batch_size, device):
     model = MLP()
     model.load_state_dict(model_params)
+    model.to(device)
     criterion = nn.NLLLoss()
     model.eval()
     loss, total, correct = 0.0, 0.0, 0.0
     data_loader = DataLoader(data, batch_size=batch_size, shuffle=False)
     for batch_index, (images, labels) in enumerate(data_loader):
+        images, labels = images.to(device), labels.to(device)
         outputs = model(images)
         batch_loss = criterion(outputs, labels)
         loss += batch_loss.item()
@@ -59,7 +63,8 @@ def average_weights(models_params, weights):
         w_avg[key] = torch.div(w_avg[key], sum_weights)
     return w_avg
 
-def post_prune_model(model_params, amount):
+
+def prune_model(model_params, amount):
     model = MLP()
     model.load_state_dict(model_params)
     # Pruning
@@ -72,3 +77,26 @@ def post_prune_model(model_params, amount):
         if isinstance(module, nn.Linear):
             tprune.remove(module, 'weight')
     return model.state_dict()
+
+
+def check_sparsity(state_dict, verbose=False):
+    total_zeros = 0
+    total_params = 0
+
+    for name, tensor in state_dict.items():
+
+        num_params = tensor.numel()
+        num_zeros = torch.sum(tensor == 0).item()
+
+        total_params += num_params
+        total_zeros += num_zeros
+
+        if verbose:
+            layer_sparsity = (num_zeros / num_params) * 100
+            print(f"Layer: {name} | Sparsity: {layer_sparsity:.2f}%")
+
+    if total_params == 0:
+        return 0.0
+
+    global_sparsity = (total_zeros / total_params) * 100
+    return global_sparsity
