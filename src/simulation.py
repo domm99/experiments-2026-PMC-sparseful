@@ -8,7 +8,7 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from learning.model import MLP
-from learning import prune_model
+from learning import prune_model, initialize_model
 from PSFLClient import psfl_client
 from dummy_client import dummy_client
 from phyelds.simulator import Simulator
@@ -47,9 +47,9 @@ def run_simulation(threshold,
     simulator.environment.set_neighborhood_function(radius_neighborhood(1.15))
     deformed_lattice(simulator, 7, 7, 1, 0.01)
 
-    initial_model_params = MLP().state_dict()
+    initial_model_params = initialize_model(dataset).state_dict()
     if pre_pruning:
-        initial_model_params = prune_model(initial_model_params, sparsity_level) # Pre pruning
+        initial_model_params = prune_model(initial_model_params, sparsity_level, dataset) # Pre pruning
 
     devices = len(simulator.environment.nodes.values())
     mapping_devices_area = distribute_nodes_spatially(devices, number_subregions)
@@ -92,7 +92,8 @@ def run_simulation(threshold,
             regions=number_subregions,
             seed = seed,
             pruning_for_check=pruning_for_check,
-            device = device,)
+            device = device,
+            dataset_name=dataset,)
     # render
     # simulator.schedule_event(0.95, render_sync, simulator, "result")
     config = ExporterConfig('data/', f'federations_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}', [], [], 3)

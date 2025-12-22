@@ -5,20 +5,19 @@ from phyelds.libraries.device import local_id, store
 from phyelds.calculus import aggregate, neighbors, remember
 from phyelds.libraries.leader_election import elect_leaders
 from phyelds.libraries.spreading import distance_to, broadcast
-from learning import local_training, model_evaluation, average_weights, prune_model, check_sparsity
-
+from learning import local_training, model_evaluation, average_weights, prune_model, check_sparsity, initialize_model
 
 impulsesEvery = 5
 MAX_TIME = 80
 
 @aggregate
-def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, seed, pruning_for_check, device):
+def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, seed, pruning_for_check, device, dataset_name):
 
     hyperparams = f'seed-{seed}_regions-{regions}_sparsity-{sparsity_level}_threshold-{threshold}'
     training_data, validation_data, test_data = data
     stored_model = remember((initial_model_params, 0)) # Stores local model and current global round
     local_model_weights, tick = stored_model.value
-    local_model = load_from_weights(local_model_weights)
+    local_model = load_from_weights(local_model_weights, dataset_name, sparsity_level)
 
     # labels_train = [training_data[idx][1] for idx in range(len(training_data))]
     # labels_val = [validation_data[idx][1] for idx in range(len(validation_data))]
@@ -27,15 +26,15 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
 
     # Local training
     evolved_model, train_loss = local_training(local_model, 2, training_data, 128, device)
-    validation_accuracy, validation_loss = model_evaluation(evolved_model, validation_data, 128, device)
+    validation_accuracy, validation_loss = model_evaluation(evolved_model, validation_data, 128, device, dataset_name, sparsity_level)
 
     #
     if pruning_for_check:
-     evolved_model = prune_model(evolved_model, sparsity_level)
+     evolved_model = prune_model(evolved_model, sparsity_level, dataset_name)
 
     log(train_loss, validation_loss, validation_accuracy) # Metrics logging
 
-    distances = loss_based_distances(evolved_model, validation_data)
+    distances = loss_based_distances(evolved_model, validation_data, device, dataset_name, sparsity_level)
     leader = elect_leaders(threshold, distances) # If leader is true, then I'm an aggregator
     store('is_aggregator', leader)
     potential = distance_to(leader, distances)
@@ -61,10 +60,10 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
 
 
 @aggregate
-def loss_based_distances(model_weights, validation_data):
+def loss_based_distances(model_weights, validation_data, device, dataset_name, sparsity_level):
     models_weights = neighbors(model_weights)
     neighbors_models = Field(models_weights.exclude_self(), local_id())
-    evaluations = neighbors_models.map(lambda m: model_evaluation(m, validation_data, 128, device)[1])
+    evaluations = neighbors_models.map(lambda m: model_evaluation(m, validation_data, 128, device, dataset_name, sparsity_level)[1])
     neighbors_evaluations = neighbors(evaluations.data)
     loss_field = compute_loss_metric(evaluations, neighbors_evaluations.data)
     return loss_field
@@ -87,7 +86,8 @@ def log(train_loss, validation_loss, validation_accuracy):
     store('ValidationAccuracy', validation_accuracy)
 
 
-def load_from_weights(weights):
-    model = MLP()
+def load_from_weights(weights, dataset_name, sparsity_level):
+    model = initialize_model(dataset_name)
+    model = prune_model(model.state_dict(), sparsity_level, dataset_name)
     model.load_state_dict(weights)
     return model
