@@ -61,7 +61,7 @@ def average_weights(models_params, weights):
     return w_avg
 
 
-def prune_model(model_params, amount):
+def prune_model(model_params, amount, reparametrization=False):
     model = MLP()
     model.load_state_dict(model_params)
     # Pruning
@@ -70,9 +70,10 @@ def prune_model(model_params, amount):
             tprune.l1_unstructured(module, name='weight', amount=amount)
 
     #Remove the pruning reparametrizations to make the model explicitly sparse
-    for _, module in model.named_modules():
-        if isinstance(module, nn.Linear):
-            tprune.remove(module, 'weight')
+    if reparametrization:
+        for _, module in model.named_modules():
+            if isinstance(module, nn.Linear):
+                tprune.remove(module, 'weight')
     return model.state_dict()
 
 
