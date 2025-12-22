@@ -5,10 +5,8 @@ from learning.model import MLP
 import torch.nn.utils.prune as tprune
 from torch.utils.data import DataLoader
 
-# TODO use device
 def local_training(model, epochs, data, batch_size, device):
-    # torch.manual_seed(seed)
-    criterion = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
     model.to(device)
     model.train()
     epoch_loss = []
@@ -19,8 +17,8 @@ def local_training(model, epochs, data, batch_size, device):
         for batch_index, (images, labels) in enumerate(data_loader):
             images, labels = images.to(device), labels.to(device)
             model.zero_grad()
-            log_probs = model(images)
-            loss = criterion(log_probs, labels)
+            output = model(images)
+            loss = criterion(output, labels)
             loss.backward()
             optimizer.step()
             batch_loss.append(loss.item())
@@ -33,21 +31,20 @@ def model_evaluation(model_params, data, batch_size, device):
     model = MLP()
     model.load_state_dict(model_params)
     model.to(device)
-    criterion = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
     model.eval()
     loss, total, correct = 0.0, 0.0, 0.0
     data_loader = DataLoader(data, batch_size=batch_size, shuffle=False)
-    for batch_index, (images, labels) in enumerate(data_loader):
-        images, labels = images.to(device), labels.to(device)
-        outputs = model(images)
-        batch_loss = criterion(outputs, labels)
-        loss += batch_loss.item()
-
-        _, pred_labels = torch.max(outputs, 1)
-        pred_labels = pred_labels.view(-1)
-        correct += torch.sum(torch.eq(pred_labels, labels)).item()
-        total += len(labels)
-
+    with torch.no_grad():
+        for batch_index, (images, labels) in enumerate(data_loader):
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            batch_loss = criterion(outputs, labels)
+            loss += batch_loss.item()
+            _, pred_labels = torch.max(outputs, 1)
+            pred_labels = pred_labels.view(-1)
+            correct += torch.sum(torch.eq(pred_labels, labels)).item()
+            total += len(labels)
     accuracy = correct / total
     return accuracy, loss
 
