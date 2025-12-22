@@ -5,6 +5,17 @@ from learning.model import MLP
 import torch.nn.utils.prune as tprune
 from torch.utils.data import DataLoader
 
+
+def initialize_model(dataset_name):
+    if dataset_name == 'EMNIST':
+        return MLP()
+    elif dataset_name == 'CIFAR100':
+        raise Exception("CIFAR100 model not implemented yet")
+    elif dataset_name == 'Synthetic':
+        raise Exception("Synthetic model not implemented yet")
+    else:
+        raise Exception("Unknown dataset")
+
 def local_training(model, epochs, data, batch_size, device):
     criterion = nn.CrossEntropyLoss()
     model.to(device)
@@ -27,8 +38,9 @@ def local_training(model, epochs, data, batch_size, device):
     return model.cpu().state_dict(), sum(epoch_loss) / len(epoch_loss)
 
 
-def model_evaluation(model_params, data, batch_size, device):
-    model = MLP()
+def model_evaluation(model_params, data, batch_size, device, dataset_name, sparsity_level):
+    model = initialize_model(dataset_name)
+    model = prune_model(model.state_dict(), sparsity_level, dataset_name)
     model.load_state_dict(model_params)
     model.to(device)
     criterion = nn.CrossEntropyLoss()
@@ -61,8 +73,8 @@ def average_weights(models_params, weights):
     return w_avg
 
 
-def prune_model(model_params, amount, reparametrization=False):
-    model = MLP()
+def prune_model(model_params, amount, dataset_name, reparametrization=False):
+    model = initialize_model(dataset_name)
     model.load_state_dict(model_params)
     # Pruning
     for _, module in model.named_modules():
@@ -74,7 +86,7 @@ def prune_model(model_params, amount, reparametrization=False):
         for _, module in model.named_modules():
             if isinstance(module, nn.Linear):
                 tprune.remove(module, 'weight')
-    return model.state_dict()
+    return model
 
 
 def check_sparsity(state_dict, verbose=False):
