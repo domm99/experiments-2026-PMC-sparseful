@@ -28,9 +28,8 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
     evolved_model, train_loss = local_training(local_model, 2, training_data, 128, device)
     validation_accuracy, validation_loss = model_evaluation(evolved_model, validation_data, 128, device, dataset_name, sparsity_level)
 
-    #
     if pruning_for_check:
-     evolved_model = prune_model(evolved_model, sparsity_level, dataset_name)
+        evolved_model = prune_model(evolved_model, sparsity_level, dataset_name)
 
     log(train_loss, validation_loss, validation_accuracy) # Metrics logging
 
@@ -42,8 +41,6 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
     models = collect_with(potential, [evolved_model], lambda x, y: x + y)
     aggregated_model = average_weights(models, [1.0 for _ in models])
     area_model = broadcast(leader, aggregated_model, distances)
-
-    print(f'Sparsity level should be: {sparsity_level} and it is: {check_sparsity(evolved_model)}')
 
     if tick % impulsesEvery == 0:
         avg = average_weights([evolved_model, area_model], [0.1, 0.9])
