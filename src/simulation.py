@@ -49,7 +49,7 @@ def run_simulation(threshold,
 
     initial_model_params = initialize_model(dataset).state_dict()
     if pre_pruning:
-        initial_model_params = prune_model(initial_model_params, sparsity_level, dataset) # Pre pruning
+        initial_model_params = prune_model(initial_model_params, sparsity_level, dataset).state_dict() # Pre pruning
 
     devices = len(simulator.environment.nodes.values())
     mapping_devices_area = distribute_nodes_spatially(devices, number_subregions)
