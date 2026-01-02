@@ -115,7 +115,7 @@ if __name__ == '__main__':
     thresholds = [40.0]
     sparsity_levels = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
     areas = [3, 5, 9]
-    seeds = list(range(int(args.max_seed)))
+    seeds = range(int(args.max_seed))
     device = get_current_device()
     dataset = args.dataset
 
@@ -137,9 +137,9 @@ if __name__ == '__main__':
 
     for seed in seeds:
         random.seed(seed)
-        for a in areas:
+        for sparsity_level in sparsity_levels:
             for threshold in thresholds:
-                for sparsity_level in sparsity_levels:
+                for a in areas:
                     print(f'Starting simulation with seed={seed}, regions={a}, sparsity={sparsity_level}, threshold={threshold}')
                     run_simulation(threshold, sparsity_level, a, seed, pre_pruning = True, pruning_for_check = False, dataset=dataset, device=device)
                     experiment_name = f'seed-{seed}_regions-{a}_sparsity-{sparsity_level}_threshold-{threshold}'
