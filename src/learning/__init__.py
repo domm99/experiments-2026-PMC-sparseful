@@ -95,6 +95,9 @@ def check_sparsity(state_dict, verbose=False):
 
     for name, tensor in state_dict.items():
 
+        if 'weight_orig' in name:
+            continue
+
         num_params = tensor.numel()
         num_zeros = torch.sum(tensor == 0).item()
 
