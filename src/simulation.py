@@ -8,7 +8,6 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from learning.model import MLP
-from learning import prune_model, initialize_model
 from PSFLClient import psfl_client
 from dummy_client import dummy_client
 from phyelds.simulator import Simulator
@@ -16,9 +15,10 @@ from utils import distribute_nodes_spatially
 from phyelds.simulator.render import render_sync
 from TestSetEvalMonitor import TestSetEvalMonitor
 from phyelds.simulator.deployments import deformed_lattice
-from phyelds.simulator.runner import aggregate_program_runner
 from custom_exporter import federations_count_csv_exporter
+from phyelds.simulator.runner import aggregate_program_runner
 from phyelds.simulator.neighborhood import radius_neighborhood
+from learning import prune_model, initialize_model, check_sparsity
 from phyelds.simulator.exporter import csv_exporter, ExporterConfig
 from ProFed.partitioner import Environment, Region, download_dataset, split_train_validation, partition_to_subregions
 
