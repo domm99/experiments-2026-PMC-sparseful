@@ -100,7 +100,7 @@ def run_simulation(threshold,
     simulator.schedule_event(0.96, federations_count_csv_exporter, simulator, 1.0, config)
     config = ExporterConfig('data/', f'experiment_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}', ['TrainLoss', 'ValidationLoss', 'ValidationAccuracy'], ['mean', 'std', 'min', 'max'], 3)
     simulator.schedule_event(1.0, csv_exporter, simulator, 1.0, config)
-    simulator.add_monitor(TestSetEvalMonitor(simulator))
+    simulator.add_monitor(TestSetEvalMonitor(simulator, device, dataset, sparsity_level))
     simulator.run(80)
 
 if __name__ == '__main__':
