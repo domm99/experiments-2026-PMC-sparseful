@@ -11,9 +11,9 @@ impulsesEvery = 5
 MAX_TIME = 80
 
 @aggregate
-def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, seed, pruning_for_check, device, dataset_name):
+def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, seed, pruning_for_check, device, dataset_name, partitioning):
 
-    hyperparams = f'seed-{seed}_regions-{regions}_sparsity-{sparsity_level}_threshold-{threshold}'
+    hyperparams = f'seed-{seed}_regions-{regions}_sparsity-{sparsity_level}_threshold-{threshold}_dataset-{dataset_name}_partitioning-{partitioning}'
     training_data, validation_data, test_data = data
     stored_model = remember((initial_model_params, 0)) # Stores local model and current global round
     local_model_weights, tick = stored_model.value

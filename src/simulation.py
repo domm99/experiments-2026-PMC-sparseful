@@ -33,13 +33,14 @@ def get_current_device():
 
 
 def run_simulation(threshold,
-                   sparsity_level,
-                   number_subregions,
-                   seed,
-                   pre_pruning = False,
-                   pruning_for_check = False,
-                   dataset='EMNIST',
-                   device = 'cpu'):
+                    sparsity_level,
+                    number_subregions,
+                    seed,
+                    pre_pruning = False,
+                    pruning_for_check = False,
+                    dataset='EMNIST',
+                    partitioning='Hard',
+                    device = 'cpu'):
 
     simulator = Simulator()
 
@@ -61,9 +62,9 @@ def run_simulation(threshold,
 
     train_data, validation_data = split_train_validation(train_data, 0.8)
     print(f'Number of training samples: {len(train_data)}')
-    environment = partition_to_subregions(train_data, validation_data, 'Hard', number_subregions, seed)
+    environment = partition_to_subregions(train_data, validation_data, partitioning, number_subregions, seed)
     test_data, _ = split_train_validation(test_data, 1.0)
-    environment_test = partition_to_subregions(test_data, test_data, 'Hard', number_subregions, seed)
+    environment_test = partition_to_subregions(test_data, test_data, partitioning, number_subregions, seed)
 
     mapping = {}
 
@@ -93,12 +94,13 @@ def run_simulation(threshold,
             seed = seed,
             pruning_for_check=pruning_for_check,
             device = device,
-            dataset_name=dataset,)
+            dataset_name=dataset,
+            partitioning=partitioning,)
     # render
     # simulator.schedule_event(0.95, render_sync, simulator, "result")
-    config = ExporterConfig('data/', f'federations_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}', [], [], 3)
+    config = ExporterConfig('data/', f'federations_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}_dataset-{dataset}_partitioning-{partitioning}', [], [], 3)
     simulator.schedule_event(0.96, federations_count_csv_exporter, simulator, 1.0, config)
-    config = ExporterConfig('data/', f'experiment_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}', ['TrainLoss', 'ValidationLoss', 'ValidationAccuracy'], ['mean', 'std', 'min', 'max'], 3)
+    config = ExporterConfig('data/', f'experiment_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}_dataset-{dataset}_partitioning-{partitioning}', ['TrainLoss', 'ValidationLoss', 'ValidationAccuracy'], ['mean', 'std', 'min', 'max'], 3)
     simulator.schedule_event(1.0, csv_exporter, simulator, 1.0, config)
     simulator.add_monitor(TestSetEvalMonitor(simulator, device, dataset, sparsity_level))
     simulator.run(80)
@@ -115,9 +117,11 @@ if __name__ == '__main__':
     thresholds = [40.0]
     sparsity_levels = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
     areas = [3, 5, 9]
-    seeds = range(int(args.max_seed))
+    datasets = ['Cifar-100']  #['EMNIST', 'Cifar-100']
+    partitionings = ['Hard', 'Dirichlet']
+    seeds = list(range(int(args.max_seed)))
     device = get_current_device()
-    dataset = args.dataset
+    #dataset = args.dataset
 
     experiment_log_dir = 'finished-experiments/'
 
@@ -137,6 +141,7 @@ if __name__ == '__main__':
 
     for seed in seeds:
         random.seed(seed)
+<<<<<<< HEAD
         for sparsity_level in sparsity_levels:
             for threshold in thresholds:
                 for a in areas:
@@ -147,3 +152,17 @@ if __name__ == '__main__':
                     new_line = {'timestamp': timestamp, 'experiment': experiment_name}
                     df = pd.concat([df, pd.DataFrame([new_line])], ignore_index=True)
                     df.to_csv(csv_file, index=False)
+=======
+        for dataset in datasets:
+            for partitioning in partitionings:
+                for a in areas:
+                    for threshold in thresholds:
+                        for sparsity_level in sparsity_levels:
+                            print(f'Starting simulation with seed={seed}, regions={a}, sparsity={sparsity_level}, threshold={threshold}, dataset {dataset}, partitioning {partitioning}')
+                            run_simulation(threshold, sparsity_level, a, seed, pre_pruning = True, pruning_for_check = False, dataset=dataset, partitioning=partitioning, device=device)
+                            experiment_name = f'seed-{seed}_regions-{a}_sparsity-{sparsity_level}_threshold-{threshold}'
+                            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            new_line = {'timestamp': timestamp, 'experiment': experiment_name}
+                            df = pd.concat([df, pd.DataFrame([new_line])], ignore_index=True)
+                            df.to_csv(csv_file, index=False)
+>>>>>>> 92966c2 (feat: add partitioning method and dataset name as parameters)
