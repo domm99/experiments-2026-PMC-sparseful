@@ -62,9 +62,9 @@ def run_simulation(threshold,
 
     train_data, validation_data = split_train_validation(train_data, 0.8)
     print(f'Number of training samples: {len(train_data)}')
-    environment = partition_to_subregions(train_data, validation_data, partitioning, number_subregions, seed)
+    environment = partition_to_subregions(train_data, validation_data, dataset, partitioning, number_subregions, seed)
     test_data, _ = split_train_validation(test_data, 1.0)
-    environment_test = partition_to_subregions(test_data, test_data, partitioning, number_subregions, seed)
+    environment_test = partition_to_subregions(test_data, test_data, dataset, partitioning, number_subregions, seed)
 
     mapping = {}
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     thresholds = [40.0]
     sparsity_levels = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
     areas = [3, 5, 9]
-    datasets = ['Cifar-100']  #['EMNIST', 'Cifar-100']
+    datasets = ['CIFAR100']  #['EMNIST', 'Cifar-100']
     partitionings = ['Hard', 'Dirichlet']
     seeds = list(range(int(args.max_seed)))
     device = get_current_device()
