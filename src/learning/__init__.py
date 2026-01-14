@@ -1,7 +1,7 @@
 import copy
 import torch
 from torch import nn
-from learning.model import MLP
+from learning.model import MLP, CNN
 import torch.nn.utils.prune as tprune
 from torch.utils.data import DataLoader
 
@@ -10,11 +10,12 @@ def initialize_model(dataset_name):
     if dataset_name == 'EMNIST':
         return MLP()
     elif dataset_name == 'CIFAR100':
-        raise Exception("CIFAR100 model not implemented yet")
+        return CNN(num_classes=100)
     elif dataset_name == 'Synthetic':
         raise Exception("Synthetic model not implemented yet")
     else:
         raise Exception("Unknown dataset")
+
 
 def local_training(model, epochs, data, batch_size, device):
     criterion = nn.CrossEntropyLoss()
@@ -77,15 +78,27 @@ def prune_model(model_params, amount, dataset_name, reparametrization=False):
     model = initialize_model(dataset_name)
     model.load_state_dict(model_params)
     # Pruning
-    for _, module in model.named_modules():
-        if isinstance(module, nn.Linear):
-            tprune.l1_unstructured(module, name='weight', amount=amount)
+    if 'CIFAR100' in dataset_name:
+        for module in model.modules():
+            if isinstance(module, nn.Conv2d):
+                tprune.ln_structured(
+                    module,
+                    name="weight",
+                    amount=amount,
+                    n=2,
+                    dim=0
+                )
+    else:
+        for _, module in model.named_modules():
+            if isinstance(module, nn.Linear):
+                tprune.l1_unstructured(module, name='weight', amount=amount)
 
     #Remove the pruning reparametrizations to make the model explicitly sparse
     if reparametrization:
         for _, module in model.named_modules():
             if isinstance(module, nn.Linear):
                 tprune.remove(module, 'weight')
+
     return model
 
 
