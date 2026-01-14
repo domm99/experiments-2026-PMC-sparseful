@@ -141,18 +141,6 @@ if __name__ == '__main__':
 
     for seed in seeds:
         random.seed(seed)
-<<<<<<< HEAD
-        for sparsity_level in sparsity_levels:
-            for threshold in thresholds:
-                for a in areas:
-                    print(f'Starting simulation with seed={seed}, regions={a}, sparsity={sparsity_level}, threshold={threshold}')
-                    run_simulation(threshold, sparsity_level, a, seed, pre_pruning = True, pruning_for_check = False, dataset=dataset, device=device)
-                    experiment_name = f'seed-{seed}_regions-{a}_sparsity-{sparsity_level}_threshold-{threshold}'
-                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    new_line = {'timestamp': timestamp, 'experiment': experiment_name}
-                    df = pd.concat([df, pd.DataFrame([new_line])], ignore_index=True)
-                    df.to_csv(csv_file, index=False)
-=======
         for dataset in datasets:
             for partitioning in partitionings:
                 for a in areas:
@@ -165,4 +153,3 @@ if __name__ == '__main__':
                             new_line = {'timestamp': timestamp, 'experiment': experiment_name}
                             df = pd.concat([df, pd.DataFrame([new_line])], ignore_index=True)
                             df.to_csv(csv_file, index=False)
->>>>>>> 92966c2 (feat: add partitioning method and dataset name as parameters)
