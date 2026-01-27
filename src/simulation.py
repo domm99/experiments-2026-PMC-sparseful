@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     # Hyper-parameters from arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--max_seed', default='2')
+    parser.add_argument('--max_seed', default='3')
     parser.add_argument('--dataset', default='EMNIST')
     args = parser.parse_args()
 
