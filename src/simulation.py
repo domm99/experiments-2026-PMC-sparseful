@@ -109,16 +109,16 @@ if __name__ == '__main__':
 
     # Hyper-parameters from arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--max_seed', default='1')
+    parser.add_argument('--max_seed', default='2')
     parser.add_argument('--dataset', default='EMNIST')
     args = parser.parse_args()
 
     # Hyper-parameters configuration
-    thresholds = [40.0]
+    thresholds = [80.0]
     sparsity_levels = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
     areas = [3, 5, 9]
     datasets = ['CIFAR100']  #['EMNIST', 'Cifar-100']
-    partitionings = ['Hard', 'Dirichlet']
+    partitionings = ['Dirichlet'] #'Hard' 
     seeds = list(range(int(args.max_seed)))
     device = get_current_device()
     #dataset = args.dataset
