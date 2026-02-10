@@ -107,12 +107,17 @@ def run_simulation(threshold,
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', default='EMNIST')
+    args = parser.parse_args()
+
     # Hyper-parameters configuration
     EMNIST_th = 40.0
     CIFAR_th = 80.0
     sparsity_levels = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
     areas = [3, 5, 9]
-    datasets = ['EMNIST', 'CIFAR100']
+    dataset = args.dataset
+    #datasets = ['EMNIST', 'CIFAR100']
     partitionings = ['Hard', 'Dirichlet']
     seeds = list(range(5))
     device = get_current_device()
@@ -135,18 +140,17 @@ if __name__ == '__main__':
 
     for seed in seeds:
         random.seed(seed)
-        for dataset in datasets:
-            for partitioning in partitionings:
-                for a in areas:
-                    for sparsity_level in sparsity_levels:
-                        if 'EMNIST' in dataset:
-                            threshold = EMNIST_th
-                        else:
-                            threshold = CIFAR_th
-                        print(f'Starting simulation with seed={seed}, regions={a}, sparsity={sparsity_level}, threshold={threshold}, dataset {dataset}, partitioning {partitioning}')
-                        run_simulation(threshold, sparsity_level, a, seed, pre_pruning = True, pruning_for_check = False, dataset=dataset, partitioning=partitioning, device=device)
-                        experiment_name = f'seed-{seed}_regions-{a}_sparsity-{sparsity_level}_threshold-{threshold}_dataset-{dataset}_partitioning-{partitioning}'
-                        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        new_line = {'timestamp': timestamp, 'experiment': experiment_name}
-                        df = pd.concat([df, pd.DataFrame([new_line])], ignore_index=True)
-                        df.to_csv(csv_file, index=False)
+        for partitioning in partitionings:
+            for a in areas:
+                for sparsity_level in sparsity_levels:
+                    if 'EMNIST' in dataset:
+                        threshold = EMNIST_th
+                    else:
+                        threshold = CIFAR_th
+                    print(f'Starting simulation with seed={seed}, regions={a}, sparsity={sparsity_level}, threshold={threshold}, dataset {dataset}, partitioning {partitioning}')
+                    run_simulation(threshold, sparsity_level, a, seed, pre_pruning = True, pruning_for_check = False, dataset=dataset, partitioning=partitioning, device=device)
+                    experiment_name = f'seed-{seed}_regions-{a}_sparsity-{sparsity_level}_threshold-{threshold}_dataset-{dataset}_partitioning-{partitioning}'
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    new_line = {'timestamp': timestamp, 'experiment': experiment_name}
+                    df = pd.concat([df, pd.DataFrame([new_line])], ignore_index=True)
+                    df.to_csv(csv_file, index=False)
