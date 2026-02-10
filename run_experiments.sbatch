@@ -10,10 +10,10 @@
 #SBATCH --mem=31G
 #SBATCH --partition=rtx2080
 #SBATCH --output=output_exp_%A_%a.txt
-#SBATCH --chdir=/scratch.hpc/davide.domini/experiments-2025-TCD-marl-neighbor-TL
+#SBATCH --chdir=/scratch.hpc/davide.domini/experiments-2026-PMC-sparseful
 #SBATCH --gres=gpu:1
 
-source ../venv/bin/activate
+source ../env/bin/activate
 
 PARAMS_LIST=(
 	"--dataset EMNIST"
