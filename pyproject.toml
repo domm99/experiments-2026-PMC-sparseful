@@ -9,7 +9,7 @@ packages = [{ include = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.13"
-phyelds = "2.6.0"
+phyelds = "5.0.0"
 torch = "^2.7.0"
 torchvision = "^0.22.0"
 profed = "0.7.4"
