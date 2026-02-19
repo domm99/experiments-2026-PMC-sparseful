@@ -9,10 +9,8 @@ from pathlib import Path
 from datetime import datetime
 from learning.model import MLP
 from PSFLClient import psfl_client
-from dummy_client import dummy_client
 from phyelds.simulator import Simulator
 from utils import distribute_nodes_spatially
-from phyelds.simulator.render import render_sync
 from TestSetEvalMonitor import TestSetEvalMonitor
 from phyelds.simulator.deployments import deformed_lattice
 from custom_exporter import federations_count_csv_exporter
@@ -113,11 +111,10 @@ if __name__ == '__main__':
 
     # Hyper-parameters configuration
     EMNIST_th = 40.0
-    CIFAR_th = 80.0
-    sparsity_levels = [0.0, 0.2, 0.4, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
+    CIFAR_th = 90.0
+    sparsity_levels = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
     areas = [3, 5, 9]
     dataset = args.dataset
-    #datasets = ['EMNIST', 'CIFAR100']
     partitionings = ['Hard', 'Dirichlet']
     seeds = list(range(5))
     device = get_current_device()
