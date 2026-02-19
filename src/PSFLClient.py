@@ -1,5 +1,5 @@
 from learning.model import MLP
-from phyelds.data import Field
+from phyelds.data import NeighborhoodField
 from phyelds.libraries.collect import collect_with
 from phyelds.libraries.device import local_id, store
 from phyelds.calculus import aggregate, neighbors, remember
@@ -15,8 +15,8 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
 
     hyperparams = f'seed-{seed}_regions-{regions}_sparsity-{sparsity_level}_threshold-{threshold}_dataset-{dataset_name}_partitioning-{partitioning}'
     training_data, validation_data, test_data = data
-    stored_model = remember((initial_model_params, 0)) # Stores local model and current global round
-    local_model_weights, tick = stored_model.value
+    set_value, stored_model = remember((initial_model_params, 0)) # Stores local model and current global round
+    local_model_weights, tick = stored_model
     local_model = load_from_weights(local_model_weights, dataset_name, sparsity_level)
 
     # labels_train = [training_data[idx][1] for idx in range(len(training_data))]
@@ -40,13 +40,14 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
 
     models = collect_with(potential, [evolved_model], lambda x, y: x + y)
     aggregated_model = average_weights(models, [1.0 for _ in models])
+
     area_model = broadcast(leader, aggregated_model, distances)
 
     if tick % impulsesEvery == 0:
         avg = average_weights([evolved_model, area_model], [0.1, 0.9])
-        stored_model.update((avg, tick + 1))
+        set_value((avg, tick+1))
     else:
-        stored_model.update((evolved_model, tick + 1))
+        set_value((evolved_model, tick + 1))
 
     if tick == MAX_TIME:
         store('final_model', evolved_model)
@@ -59,7 +60,7 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
 @aggregate
 def loss_based_distances(model_weights, validation_data, device, dataset_name, sparsity_level):
     models_weights = neighbors(model_weights)
-    neighbors_models = Field(models_weights.exclude_self(), local_id())
+    neighbors_models = NeighborhoodField(models_weights.exclude_self(), local_id())
     evaluations = neighbors_models.map(lambda m: model_evaluation(m, validation_data, 128, device, dataset_name, sparsity_level)[1])
     neighbors_evaluations = neighbors(evaluations.data)
     loss_field = compute_loss_metric(evaluations, neighbors_evaluations.data)
@@ -74,7 +75,7 @@ def compute_loss_metric(evaluations, neighbors_evaluations):
     for neighbor_id, evaluation in data.items():
         neighbor_evaluation_of_myself = neighbors_evaluations[neighbor_id].get(mid, float('inf'))
         loss_metric[neighbor_id] = neighbor_evaluation_of_myself + evaluation
-    return Field(loss_metric, mid)
+    return NeighborhoodField(loss_metric, mid)
 
 
 def log(train_loss, validation_loss, validation_accuracy):
