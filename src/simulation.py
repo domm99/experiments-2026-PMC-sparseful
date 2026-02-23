@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     # Hyper-parameters configuration
     EMNIST_th = 40.0
-    CIFAR_th = 90.0
+    CIFAR_th = 100.0
     sparsity_levels = [0.0, 0.2, 0.4, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.99]
     areas = [3, 5, 9]
     dataset = args.dataset
