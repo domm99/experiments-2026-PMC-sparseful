@@ -1,13 +1,9 @@
-import os
-import sys
-import yaml
 import torch
 import random
 import argparse
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-from learning.model import MLP
 from PSFLClient import psfl_client
 from phyelds.simulator import Simulator
 from utils import distribute_nodes_spatially
@@ -43,8 +39,8 @@ def run_simulation(threshold,
     simulator = Simulator()
 
     # deformed lattice
-    simulator.environment.set_neighborhood_function(radius_neighborhood(1.15))
-    deformed_lattice(simulator, 7, 7, 1, 0.01)
+    simulator.environment.set_neighborhood_function(radius_neighborhood(1.12 * number_subregions/3))
+    deformed_lattice(simulator, 7, 7, 1 * number_subregions/3, 0.01)
 
     initial_model_params = initialize_model(dataset).state_dict()
     if pre_pruning:
@@ -116,7 +112,7 @@ if __name__ == '__main__':
     areas = [3, 5, 9]
     dataset = args.dataset
     partitionings = ['Hard', 'Dirichlet']
-    seeds = list(range(5))
+    seeds = [1]
     device = get_current_device()
 
     experiment_log_dir = 'finished-experiments/'
