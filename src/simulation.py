@@ -4,6 +4,7 @@ import argparse
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+from phyelds.calculus import aggregate
 from PSFLClient import psfl_client
 from phyelds.simulator import Simulator
 from utils import distribute_nodes_spatially
@@ -16,6 +17,9 @@ from learning import prune_model, initialize_model, check_sparsity
 from phyelds.simulator.exporter import csv_exporter, ExporterConfig
 from ProFed.partitioner import Environment, Region, download_dataset, split_train_validation, partition_to_subregions
 
+
+from phyelds.simulator.render import RenderMonitor
+from phyelds.simulator.effects import DrawNodes, DrawEdges, RenderConfig, RenderMode
 
 def get_current_device():
     device: str = 'cpu'
@@ -71,7 +75,7 @@ def run_simulation(threshold,
             complete_data = data[0], data[1], test_subset
             mapping[device_id] = complete_data
 
-    # schedule the main function
+    #schedule the main function
     for node in simulator.environment.nodes.values():
         simulator.schedule_event(
             0.0,
@@ -90,14 +94,25 @@ def run_simulation(threshold,
             device = device,
             dataset_name=dataset,
             partitioning=partitioning,)
-    # render
+
     # simulator.schedule_event(0.95, render_sync, simulator, "result")
     config = ExporterConfig('data/', f'federations_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}_dataset-{dataset}_partitioning-{partitioning}', [], [], 3)
     simulator.schedule_event(0.96, federations_count_csv_exporter, simulator, 1.0, config)
     config = ExporterConfig('data/', f'experiment_seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}_dataset-{dataset}_partitioning-{partitioning}', ['TrainLoss', 'ValidationLoss', 'ValidationAccuracy'], ['mean', 'std', 'min', 'max'], 3)
     simulator.schedule_event(1.0, csv_exporter, simulator, 1.0, config)
     simulator.add_monitor(TestSetEvalMonitor(simulator, device, dataset, sparsity_level))
-    simulator.run(80)
+
+    RenderMonitor(
+        simulator,
+        RenderConfig(
+            effects=[DrawEdges(), DrawNodes(color_from="result")],
+            mode=RenderMode.SAVE,
+            save_as=f"areas-{number_subregions}.mp4",
+            dt=1.0
+        )
+    )
+
+    simulator.run(30)
 
 if __name__ == '__main__':
 
@@ -108,8 +123,8 @@ if __name__ == '__main__':
     # Hyper-parameters configuration
     EMNIST_th = 40.0
     CIFAR_th = 100.0
-    sparsity_levels = [0.0, 0.2, 0.4, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.99]
-    areas = [3, 5, 9]
+    sparsity_levels = [0.0]#[0.0, 0.2, 0.4, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.99]
+    areas = [5] #[3, 5, 9]
     dataset = args.dataset
     partitionings = ['Hard', 'Dirichlet']
     seeds = [1]

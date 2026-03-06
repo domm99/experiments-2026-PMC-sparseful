@@ -3,12 +3,12 @@ from phyelds.data import NeighborhoodField
 from phyelds.libraries.collect import collect_with
 from phyelds.libraries.device import local_id, store
 from phyelds.calculus import aggregate, neighbors, remember
-from phyelds.libraries.leader_election import elect_leaders
+from CustomLeaderElection import elect_leaders
 from phyelds.libraries.spreading import distance_to, broadcast
 from learning import local_training, model_evaluation, average_weights, prune_model, check_sparsity, initialize_model
 
 impulsesEvery = 5
-MAX_TIME = 80
+MAX_TIME = 30
 
 @aggregate
 def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, seed, pruning_for_check, device, dataset_name, partitioning):
@@ -34,7 +34,7 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
     log(train_loss, validation_loss, validation_accuracy) # Metrics logging
 
     distances = loss_based_distances(evolved_model, validation_data, device, dataset_name, sparsity_level)
-    leader = elect_leaders(threshold, distances) # If leader is true, then I'm an aggregator
+    (leader, leader_id) = elect_leaders(threshold, distances) # If leader is true, then I'm an aggregator
     store('is_aggregator', leader)
     potential = distance_to(leader, distances)
 
@@ -54,7 +54,7 @@ def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, 
         store('test_data', test_data)
         store('hyperparams', hyperparams)
 
-    return potential
+    return leader_id
 
 
 @aggregate
