@@ -8,7 +8,7 @@ from phyelds.libraries.spreading import distance_to, broadcast
 from learning import local_training, model_evaluation, average_weights, prune_model, check_sparsity, initialize_model
 
 impulsesEvery = 5
-MAX_TIME = 30
+MAX_TIME = 50
 
 @aggregate
 def psfl_client(initial_model_params, data, threshold, sparsity_level, regions, seed, pruning_for_check, device, dataset_name, partitioning):
