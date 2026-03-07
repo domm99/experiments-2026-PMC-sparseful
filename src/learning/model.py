@@ -68,3 +68,29 @@ class SmallConvBigHead(nn.Module):
         x = self.features(x)
         x = self.classifier(x)
         return x
+
+
+class MicroConvTinyHead(nn.Module):
+    def __init__(self, num_classes=27):
+        super().__init__()
+
+        # Aggiungiamo un pooling in più per abbattere le dimensioni spaziali
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 8, kernel_size=3, padding=1),  # 1x28x28 -> 8x28x28
+            nn.ReLU(),
+            nn.MaxPool2d(2),  # -> 8x14x14
+            nn.MaxPool2d(2)  # -> 8x7x7 (strozzatura spaziale!)
+        )
+
+        # Testa molto più piccola e con un layer in meno
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(8 * 7 * 7, 32),  # 392 -> 32 (Invece di 1568 -> 256)
+            nn.ReLU(),
+            nn.Linear(32, num_classes)  # 32 -> 27 (Rimosso il layer da 128)
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        return x

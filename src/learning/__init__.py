@@ -1,7 +1,7 @@
 import copy
 import torch
 from torch import nn
-from learning.model import MLP, CNN, SmallConvBigHead
+from learning.model import MLP, CNN, SmallConvBigHead, MicroConvTinyHead
 import torch.nn.utils.prune as tprune
 from torch.utils.data import DataLoader
 
@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 def initialize_model(dataset_name):
     if dataset_name == 'EMNIST':
         # return MLP()
-        return SmallConvBigHead()
+        return MicroConvTinyHead()
     elif dataset_name == 'CIFAR100':
         return CNN(num_classes=100)
     elif dataset_name == 'Synthetic':
