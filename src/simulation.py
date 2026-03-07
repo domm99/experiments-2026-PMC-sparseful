@@ -113,7 +113,7 @@ def run_simulation(threshold,
         )
     )
 
-    simulator.run(2)
+    simulator.run(50)
 
 if __name__ == '__main__':
 
