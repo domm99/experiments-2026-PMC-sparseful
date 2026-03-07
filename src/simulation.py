@@ -107,7 +107,7 @@ def run_simulation(threshold,
         RenderConfig(
             effects=[DrawEdges(), DrawNodes(color_from="result")],
             mode=RenderMode.SAVE,
-            save_as=f"areas-{number_subregions}.mp4",
+            save_as=f"export/seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}_dataset-{dataset}_partitioning-{partitioning}.mp4",
             dt=1.0
         )
     )
@@ -134,6 +134,8 @@ if __name__ == '__main__':
 
     data_dir = Path(experiment_log_dir)
     data_dir.mkdir(parents=True, exist_ok=True)
+
+    Path('export').mkdir(parents=True, exist_ok=True)
 
     csv_file = f'{experiment_log_dir}experiment_log.csv'
 
