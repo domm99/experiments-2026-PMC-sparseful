@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=experiment-sparseful
-#SBATCH --array=0-1
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=davide.domini@unibo.it
 #SBATCH --time=3-00:00:00
@@ -15,13 +14,8 @@
 
 source ../env/bin/activate
 
-PARAMS_LIST=(
-	"--dataset EMNIST"
-	"--dataset CIFAR100"
-)
-
 PARAMS="${PARAMS_LIST[$SLURM_ARRAY_TASK_ID]}"
 
 export PYTHONPATH=/scratch.hpc/davide.domini/experiments-2026-PMC-sparseful
 
-python3 src/simulation.py $PARAMS
+python3 src/simulation.py --dataset EMNIST
