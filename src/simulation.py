@@ -20,6 +20,7 @@ from ProFed.partitioner import Environment, Region, download_dataset, split_trai
 
 from phyelds.simulator.render import RenderMonitor
 from phyelds.simulator.effects import DrawNodes, DrawEdges, RenderConfig, RenderMode
+from CustomDrawings import CustomDrawNodes
 
 def get_current_device():
     device: str = 'cpu'
@@ -105,14 +106,14 @@ def run_simulation(threshold,
     RenderMonitor(
         simulator,
         RenderConfig(
-            effects=[DrawEdges(), DrawNodes(color_from="result")],
+            effects=[DrawEdges(), CustomDrawNodes(color_from="result")],
             mode=RenderMode.SAVE,
             save_as=f"export/seed-{seed}_regions-{number_subregions}_sparsity-{sparsity_level}_dataset-{dataset}_partitioning-{partitioning}.mp4",
             dt=1.0
         )
     )
 
-    simulator.run(50)
+    simulator.run(2)
 
 if __name__ == '__main__':
 
