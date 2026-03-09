@@ -128,7 +128,7 @@ if __name__ == '__main__':
     areas = [3, 5]#, 9]
     dataset = args.dataset
     partitionings = ['Hard', 'Dirichlet']
-    seeds = [0, 2]
+    seeds = [0]
     device = get_current_device()
 
     experiment_log_dir = 'finished-experiments/'
@@ -157,7 +157,10 @@ if __name__ == '__main__':
                     if 'EMNIST' in dataset:
                         threshold = EMNIST_th
                     else:
-                        threshold = CIFAR_th
+                        if a == 3:
+                            threshold = 120.0
+                        elif a == 5:
+                            threshold = 90.0
                     print(f'Starting simulation with seed={seed}, regions={a}, sparsity={sparsity_level}, threshold={threshold}, dataset {dataset}, partitioning {partitioning}')
                     run_simulation(threshold, sparsity_level, a, seed, pre_pruning = True, pruning_for_check = False, dataset=dataset, partitioning=partitioning, device=device)
                     experiment_name = f'seed-{seed}_regions-{a}_sparsity-{sparsity_level}_threshold-{threshold}_dataset-{dataset}_partitioning-{partitioning}'

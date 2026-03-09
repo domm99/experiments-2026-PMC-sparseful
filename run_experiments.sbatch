@@ -16,4 +16,4 @@ source ../env/bin/activate
 
 export PYTHONPATH=/scratch.hpc/davide.domini/experiments-2026-PMC-sparseful
 
-python3 src/simulation.py --dataset EMNIST
+python3 src/simulation.py --dataset CIFAR100
