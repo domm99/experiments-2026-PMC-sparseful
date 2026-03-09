@@ -14,8 +14,6 @@
 
 source ../env/bin/activate
 
-PARAMS="${PARAMS_LIST[$SLURM_ARRAY_TASK_ID]}"
-
 export PYTHONPATH=/scratch.hpc/davide.domini/experiments-2026-PMC-sparseful
 
 python3 src/simulation.py --dataset EMNIST
